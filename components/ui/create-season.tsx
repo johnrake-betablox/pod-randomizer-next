@@ -31,6 +31,7 @@ export default function CreateSeason() {
     }
 
     setLoading(true);
+    setSearch("");
 
     setTimeout(() => {
       const simCount = 500;
@@ -57,7 +58,7 @@ export default function CreateSeason() {
       }
 
       setLoading(false);
-    }, 1000);
+    }, 300);
   };
 
   const scheduledCount = (day: Day): number => {
