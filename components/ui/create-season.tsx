@@ -1,7 +1,7 @@
 "use client";
 
 import { Day, Season, createSeasonByPod } from "@/lib/randomizer-by-pod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { DayCard } from "./day-card";
 import { Button } from "./button";
 import {
