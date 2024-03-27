@@ -53,7 +53,11 @@ export function createSeasonByPod(
 
   for (let i = 0; i < days.length; i++) {
     const day = days[i];
-    // console.log(`${day.name}: Placing players in pods`);
+
+    console.log("");
+    console.log("");
+    console.log(day.name);
+    console.log("Placing players in pods");
 
     const shuffledPlayers = shuffle<string>(players);
 
@@ -62,7 +66,17 @@ export function createSeasonByPod(
       putPlayersInPod(pod, day, days, placementOptions, shuffledPlayers);
     }
 
-    console.log(`${day.name}: Done placing players`);
+    console.log("checking for unscheduled players");
+
+    const unschedulePlayers = getUnschedulePlayers(day, players);
+
+    console.log(`Unscheduled found players found ${unschedulePlayers}`);
+
+    unschedulePlayers.forEach((p) => {
+      findPodForUnscheduledPlayer(p, day, days, placementOptions);
+    });
+
+    console.log(`Done placing players`);
     // ${JSON.stringify(day, null, 4)}
   }
 
@@ -84,6 +98,74 @@ function createDefaultDay(name: string, numPods: number): Day {
     name,
     pods,
   };
+}
+
+function getUnschedulePlayers(day: Day, allPlayers: string[]): string[] {
+  const players = day.pods.map((p) => p.players).flat();
+  return allPlayers.filter((p) => players.includes(p) === false);
+}
+
+function findPodForUnscheduledPlayer(
+  player: string,
+  day: Day,
+  days: Day[],
+  placementOptions: PlacementOptions
+) {
+  const allPodsFull = day.pods.every(
+    (p) => p.players.length >= placementOptions.playersPerPod
+  );
+
+  if (allPodsFull) {
+    putPlayerInAnyPod(player, day, days, placementOptions);
+  }
+}
+
+function putPlayerInAnyPod(
+  player: string,
+  day: Day,
+  days: Day[],
+  placementOptions: PlacementOptions
+) {
+  const availablePods = getAvailablePods(
+    player,
+    day,
+    days,
+    placementOptions,
+    true
+  );
+
+  if (availablePods.length > 0) {
+    // Make sure to sort so we don't accidently overload one pod before others
+    const sorted = availablePods.sort(
+      (a, b) => b.players.length - a.players.length
+    );
+    console.log("pod options:", player, sorted);
+    const pod = randomItem(sorted);
+    pod.players.push(player);
+  } else {
+    console.log("pod options:", player, availablePods);
+  }
+}
+
+function getAvailablePods(
+  player: string,
+  day: Day,
+  days: Day[],
+  placementOptions: PlacementOptions,
+  allowFull = false
+): Pod[] {
+  return day.pods.filter((pod) => {
+    const hasBeenInPod = playerHasBeenInPod(player, pod, days);
+    const podIsFull = pod.players.length >= placementOptions.playersPerPod;
+
+    // We allow excess players to fill in pods because we rarely have an even number of players to a pod
+    // Sometimes a pod will need to host an extra player
+    if (allowFull) {
+      return hasBeenInPod === false;
+    } else {
+      return hasBeenInPod === false && podIsFull === false;
+    }
+  });
 }
 
 export function putPlayersInPod(
@@ -251,4 +333,12 @@ export function shuffle<T>(items: T[]): T[] {
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomItem<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
 }

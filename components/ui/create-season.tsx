@@ -1,7 +1,7 @@
 "use client";
 
 import { Day, Season, createSeasonByPod } from "@/lib/randomizer-by-pod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DayCard } from "./day-card";
 import { Button } from "./button";
 import {
@@ -14,26 +14,50 @@ import {
 } from "./card";
 import { Label } from "./label";
 import { Input } from "./input";
+import { Separator } from "./separator";
+import GlobalLoadingIndicator from "./global-loading-indicator";
 
 export default function CreateSeason() {
   const [season, setSeason] = useState<Season>();
-  //   const [fetching, setFetching] = useState(false);
-  //   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
   const createSeason = (data: FormData) => {
     const podCount = parseInt(String(data.get("pods")), 10);
     const playerCount = parseInt(String(data.get("players")), 10);
 
-    console.log(podCount, playerCount);
-
     if (!podCount || !playerCount) {
       return;
     }
 
-    const newSeason = createSeasonByPod("Season 14", podCount, playerCount);
+    setLoading(true);
 
-    setSeason(newSeason);
+    setTimeout(() => {
+      const simCount = 500;
+      let bestSeason = null;
+      let bestCount = 100;
+
+      // Try a bunch of simulations to see if we can get a good outcome
+      for (let i = 1; i <= simCount; i++) {
+        const newSeason = createSeasonByPod("Season 14", podCount, playerCount);
+        const count = totalNotScheduledCount(newSeason);
+
+        if (!bestSeason) {
+          bestSeason = newSeason;
+        }
+
+        if (count < bestCount) {
+          bestCount = count;
+          bestSeason = newSeason;
+        }
+
+        if (i === simCount) {
+          setSeason(bestSeason);
+        }
+      }
+
+      setLoading(false);
+    }, 1000);
   };
 
   const scheduledCount = (day: Day): number => {
@@ -58,8 +82,11 @@ export default function CreateSeason() {
     );
   };
 
+  console.log(loading);
+
   return (
     <div className="container mx-auto px-4 w-full h-full">
+      {loading && <GlobalLoadingIndicator />}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -89,6 +116,8 @@ export default function CreateSeason() {
         </Card>
       </form>
 
+      <Separator className="my-4" />
+
       {season && (
         <div className="mt-10">
           <div className="mb-4 grid sm:grid-cols-4 gap-x-10">
@@ -97,10 +126,10 @@ export default function CreateSeason() {
                 Not Scheduled: {totalNotScheduledCount(season)}
               </h2>
             </div>
-            <input
+            <Input
               onChange={(e) => setSearch(e.currentTarget.value)}
-              className="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               placeholder="player # (e.g. 1, 24, 122)"
+              className="bg-white"
             />
           </div>
           <DayCard
@@ -108,21 +137,25 @@ export default function CreateSeason() {
             players={season.allPlayers}
             search={search}
           />
+          <Separator className="my-4" />
           <DayCard
             day={season.days[1]}
             players={season.allPlayers}
             search={search}
           />
+          <Separator className="my-4" />
           <DayCard
             day={season.days[2]}
             players={season.allPlayers}
             search={search}
           />
+          <Separator className="my-4" />
           <DayCard
             day={season.days[3]}
             players={season.allPlayers}
             search={search}
           />
+          <Separator className="my-4" />
           <DayCard
             day={season.days[4]}
             players={season.allPlayers}
