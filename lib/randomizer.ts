@@ -25,8 +25,8 @@ export function createSeason(
   const playersPerPod = Math.floor(numPlayers / numPods);
   const excessPlayers = numPlayers - playersPerPod * numPods;
 
-  const players = [...Array(numPlayers).keys()].map(
-    (index: number) => `Player ${index + 1}`
+  const players = Array.from(Array(numPlayers).keys()).map(
+    (index: number) => `${index + 1}`
   );
 
   const placementOptions: PlacementOptions = {
@@ -71,11 +71,13 @@ export function createSeason(
 }
 
 function createDefaultDay(name: string, numPods: number): Day {
-  const pods: Pod[] = [...Array(numPods).keys()].map((index: number) => ({
-    name: `Pod ${index + 1}`,
-    judge: `Judge ${index + 1}`,
-    players: [],
-  }));
+  const pods: Pod[] = Array.from(Array(numPods).keys()).map(
+    (index: number) => ({
+      name: `Pod ${index + 1}`,
+      judge: `Judge ${index + 1}`,
+      players: [],
+    })
+  );
 
   return {
     name,
